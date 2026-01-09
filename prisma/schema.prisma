@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OPS
+  VIEWER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(OPS)
+  createdAt DateTime @default(now())
+
+  requestsCreated  Request[] @relation("UserRequests")
+  requestsAssigned Request[]
+
+  approvals Approval[]
+  comments  Comment[]
+  auditLogs AuditLog[]
+}
+
+model Request {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+
+  createdById  Int
+  assignedToId Int?
+
+  createdBy  User  @relation("UserRequests", fields: [createdById], references: [id])
+  assignedTo User? @relation(fields: [assignedToId], references: [id])
+
+  approvals Approval[]
+  comments  Comment[]
+}
+
+model Approval {
+  id        Int      @id @default(autoincrement())
+  decision  String
+  comment   String?
+  createdAt DateTime @default(now())
+
+  requestId    Int
+  approvedById Int
+
+  request    Request @relation(fields: [requestId], references: [id])
+  approvedBy User    @relation(fields: [approvedById], references: [id])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  message   String
+  createdAt DateTime @default(now())
+
+  requestId Int
+  userId    Int
+
+  request Request @relation(fields: [requestId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  entity    String
+  entityId  Int
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+}
