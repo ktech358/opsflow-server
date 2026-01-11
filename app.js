@@ -14,4 +14,12 @@ app.use("/auth", authRoutes);
 app.use("/requests", requestRoutes);
 app.use("/audit-logs", auditRoutes);
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+
+
 export default app;
